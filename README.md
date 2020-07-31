@@ -1,24 +1,27 @@
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/8a2f2a06171248acb6411a2d870558c8)](https://app.codacy.com/app/antho325/jmeter-elasticsearch-backend-listener?utm_source=github.com&utm_medium=referral&utm_content=delirius325/jmeter-elasticsearch-backend-listener&utm_campaign=Badge_Grade_Dashboard)
-[![Build Status](https://travis-ci.org/delirius325/jmeter-elasticsearch-backend-listener.svg?branch=master)](https://travis-ci.org/delirius325/jmeter-elasticsearch-backend-listener)
-
 
 # Overview
 ### Description
-JMeter ElasticSearch Backend Listener is a JMeter plugin enabling you to send test results to an ElasticSearch engine. It is meant as an alternative live-monitoring tool to the built-in "InfluxDB" backend listener of JMeter. 
+This is a fork from the Elastic Search jmeter listener found here (https://github.com/delirius325/jmeter-elasticsearch-backend-listener).  Some of the wording below is directly from this repo.
+
+The idea to make a CloudWatch version came from this article found here (https://www.concurrencylabs.com/blog/publish-jmeter-test-results-to-cloudwatch-logs/)
+
+Thank you authors.
+
+JMeter CloudWatch Backend Listener is a JMeter plugin enabling you to send test results directly to a CloudWatch Log Group. CloudWatch metrics can be setup based on these log entries and InSights can be used to query the log entries.  CloudWatch Dashboards can be used to visualize these logs.  These logs can be forwarded on to other services for further analysis and visualization. 
 
 ### Features
 
-* ElasticSearch low-level REST client
-  * Using the low-level client makes the plugin compatible with any ElasticSearch version
-* X-Pack Authentication!
-  * Just supply your crendentials in the specified fields!
+* CloudWatch 
+  * Uses the AWS CloudWatch SDK to push logs
+* IAM Role or IAM credential authentication
+  * If running JMeter in AWS, the SDK will automatically use the instance/node IAM Role.  If running on-prem, set the AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables or set in .aws/credentials file with credentials and the SDK will automatically use those credentials. 
 * Bulk requests
-  * By making bulk requests, there are practically no impacts on the performance of the tests themselves. 
+  * The LogEvents are sent in bulk up to 100 at a time. 
 * Filters
-  * Only send the samples you want by using Filters! Simply type them as follows in the field ``es.sample.filter`` : ``filter1;filter2;filter3`` or ``sampleLabel_must_contain_this``.
+  * Only send the samples you want by using Filters! Simply type them as follows in the field ``cw.sample.filter`` : ``filter1;filter2;filter3`` or ``sampleLabel_must_contain_this``.
   * You can also choose to exclude certain samplers; `!!exclude_this;filter1;filter2`
 * Specific fields ```field1;field2;field3`
-  * Specify fields that you want to send to ElasticSearch (possible fields below)
+  * Specify fields that you want to send to CloudWatch (possible fields below)
      * AllThreads
      * BodySize
      * Bytes
@@ -43,21 +46,18 @@ JMeter ElasticSearch Backend Listener is a JMeter plugin enabling you to send te
      * InjectorHostname
 * Verbose, semi-verbose, error only, and quiet mode
   * __debug__ : Send request/response information of all samplers (headers, body, etc.)
-  * __info__ : Sends all samplers to the ElasticSearch engine, but only sends the headers, body info for the failed samplers.
+  * __info__ : Sends all samplers to the CloudWatch engine, but only sends the headers, body info for the failed samplers.
   * __quiet__ : Only sends the response time, bytes, and other metrics
-  * __error__ : Only sends the failing samplers to the ElasticSearch engine (Along with their headers and body information).
-* Use either Kibana or Grafana to vizualize your results!
-  * [Click here to get a sample Grafana dashboard!](https://github.com/delirius325/jmeter-elasticsearch-backend-listener/wiki/JMeter-Generic-Dashboard) - All you need to do is import it into Grafana and change the data source!
-* Continuous Integration support - [Build comparison!](https://github.com/delirius325/jmeter-elasticsearch-backend-listener/wiki/Continuous-Integration---Build-Comparison)
-* Send JMeter variables to ElasticSearch! [Refer to this for more info!](https://github.com/delirius325/jmeter-elasticsearch-backend-listener/wiki/Sending-JMeter-variables) 
-* New AWS ES parameters introducted in 2.6.0 version which leverage Role based authentication to access Elastic Search managed hosting on AWS
+  * __error__ : Only sends the failing samplers to the CloudWatch engine (Along with their headers and body information).
+* Use CloudWatch dashboards to visualize your results!
+
 
 ### Maven
 ```xml
 <dependency>
-  <groupId>io.github.delirius325</groupId>
-  <artifactId>jmeter.backendlistener.elasticsearch</artifactId>
-  <version>2.6.10-SNAPSHOT</version>
+  <groupId>io.github.dhart-ebsco</groupId>
+  <artifactId>jmeter.backendlistener.cloudwatch</artifactId>
+  <version>1.0.0</version>
 </dependency>
 ```
 
@@ -71,12 +71,5 @@ mvn package
 ```
 Move the resulting JAR to your `JMETER_HOME/lib/ext`.
 
-## Screenshots
-### Configuration
-![screnshot1](https://cdn-images-1.medium.com/max/2000/1*iVb7mIp2dPg7zE4Ph3PrGQ.png "Screenshot of configuration")
-
-### Sample Grafana dashboard
-![screnshot1](https://image.ibb.co/jW6LNx/Screen_Shot_2018_03_21_at_10_21_18_AM.png "Sample Grafana Dashboard")
-
 ### For more info
-For more information, here's a little [documentation](https://github.com/delirius325/jmeter-elasticsearch-backend-listener/wiki).
+For more information, here's a little [documentation](https://github.com/dhartebsco/jmeter-CloudWatch-backend-listener/wiki).

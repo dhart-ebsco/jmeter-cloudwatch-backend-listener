@@ -1,15 +1,17 @@
-package io.github.delirius325.jmeter.backendlistener.elasticsearch;
+package io.github.dhartebsco.jmeter.backendlistener.cloudwatch;
 
 import java.net.InetAddress;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -22,27 +24,26 @@ import org.slf4j.LoggerFactory;
 
 import static org.apache.commons.lang3.math.NumberUtils.isCreatable;
 
-public class ElasticSearchMetric {
-    private static final Logger logger = LoggerFactory.getLogger(ElasticSearchMetric.class);
+public class CloudWatchLogEvent {
+    private static final Logger logger = LoggerFactory.getLogger(CloudWatchLogEvent.class);
     private SampleResult sampleResult;
-    private String esTestMode;
-    private String esTimestamp;
+    private String cwTestMode;
+    private String cwTimestamp;
     private int ciBuildNumber;
     private HashMap<String, Object> json;
     private Set<String> fields;
     private boolean allReqHeaders;
     private boolean allResHeaders;
 
-    public ElasticSearchMetric(
+    public CloudWatchLogEvent(
             SampleResult sr, String testMode, String timeStamp, int buildNumber,
-            boolean parseReqHeaders, boolean parseResHeaders, Set<String> fields) {
+            boolean parseReqHeaders, Set<String> fields) {
         this.sampleResult = sr;
-        this.esTestMode = testMode.trim();
-        this.esTimestamp = timeStamp.trim();
+        this.cwTestMode = testMode.trim();
+        this.cwTimestamp = timeStamp.trim();
         this.ciBuildNumber = buildNumber;
         this.json = new HashMap<>();
         this.allReqHeaders = parseReqHeaders;
-        this.allResHeaders = parseResHeaders;
         this.fields = fields;
     }
 
@@ -52,8 +53,8 @@ public class ElasticSearchMetric {
      * @param context BackendListenerContext
      * @return a JSON Object as Map(String, Object)
      */
-    public Map<String, Object> getMetric(BackendListenerContext context) throws Exception {
-        SimpleDateFormat sdf = new SimpleDateFormat(this.esTimestamp);
+    public Map<String, Object> getLogEvent(BackendListenerContext context) throws Exception {
+        SimpleDateFormat sdf = new SimpleDateFormat(this.cwTimestamp);
 
         //add all the default SampleResult parameters
         addFilteredJSON("AllThreads", this.sampleResult.getAllThreads());
@@ -73,14 +74,14 @@ public class ElasticSearchMetric {
         addFilteredJSON("ThreadName", this.sampleResult.getThreadName());
         addFilteredJSON("URL", this.sampleResult.getURL());
         addFilteredJSON("ResponseCode", this.sampleResult.getResponseCode());
-        addFilteredJSON("TestStartTime", JMeterContextService.getTestStartTime());
+        addFilteredJSON("TestStartTime", sdf.format(new Date(JMeterContextService.getTestStartTime())));
         addFilteredJSON("SampleStartTime", sdf.format(new Date(this.sampleResult.getStartTime())));
         addFilteredJSON("SampleEndTime", sdf.format(new Date(this.sampleResult.getEndTime())));
-        addFilteredJSON("Timestamp", this.sampleResult.getTimeStamp());
+        addFilteredJSON("Timestamp", sdf.format(new Date(this.sampleResult.getTimeStamp())));
         addFilteredJSON("InjectorHostname", InetAddress.getLocalHost().getHostName());
 
         // Add the details according to the mode that is set
-        switch (this.esTestMode) {
+        switch (this.cwTestMode) {
             case "debug":
                 addDetails();
                 break;
@@ -109,8 +110,7 @@ public class ElasticSearchMetric {
     private void addAssertions() {
         AssertionResult[] assertionResults = this.sampleResult.getAssertionResults();
         if (assertionResults != null) {
-            Map<String, Object>[] assertionArray = new HashMap[assertionResults.length];
-            Integer i = 0;
+            List<Map<String, Object>> assertionArray = new ArrayList<>();
             String failureMessage = "";
             boolean isFailure = false;
             for (AssertionResult assertionResult : assertionResults) {
@@ -121,8 +121,7 @@ public class ElasticSearchMetric {
                 assertionMap.put("failureMessage", assertionResult.getFailureMessage());
                 failureMessage += assertionResult.getFailureMessage() + "\n";
                 assertionMap.put("name", assertionResult.getName());
-                assertionArray[i] = assertionMap;
-                i++;
+                assertionArray.add(assertionMap);
             }
             addFilteredJSON("AssertionResults", assertionArray);
             addFilteredJSON("FailureMessage", failureMessage);
@@ -162,7 +161,7 @@ public class ElasticSearchMetric {
         while (pluginParameters.hasNext()) {
             String parameterName = pluginParameters.next();
 
-            if (!parameterName.startsWith("es.") && context.containsParameter(parameterName)
+            if (!parameterName.startsWith("cw.") && context.containsParameter(parameterName)
                     && !"".equals(parameter = context.getParameter(parameterName).trim())) {
                 if (isCreatable(parameter)) {
                     addFilteredJSON(parameterName, Long.parseLong(parameter));
@@ -186,12 +185,12 @@ public class ElasticSearchMetric {
 
     /**
      * This method will parse the headers and look for custom variables passed through as header. It can also seperate
-     * all headers into different ElasticSearch document properties by passing "true" This is a work-around the native
+     * all headers into different JSON properties by passing "true" This is a work-around the native
      * behaviour of JMeter where variables are not accessible within the backend listener.
      *
-     * @param allReqHeaders boolean to determine if the user wants to separate ALL request headers into different ES JSON
+     * @param allReqHeaders boolean to determine if the user wants to separate ALL request headers into different JSON
      *                      properties.
-     * @param allResHeaders boolean to determine if the user wants to separate ALL response headers into different ES JSON
+     * @param allResHeaders boolean to determine if the user wants to separate ALL response headers into different JSON
      *                      properties.
      *                      <p>
      *                      NOTE: This will be fixed as soon as a patch comes in for JMeter to change the behaviour.
@@ -214,14 +213,7 @@ public class ElasticSearchMetric {
 
         for (String[] lines : headersArrayList) {
             for (int i = 0; i < lines.length; i++) {
-                String[] header = lines[i].split(":", 2);
-
-                // if not all res/req headers and header contains special X-tag
-                if (!allReqHeaders && !allResHeaders && header.length > 1) {
-                    if (header[0].startsWith("X-es-backend-")) {
-                        this.json.put(header[0].replaceAll("X-es-backend-", "").trim(), header[1].trim());
-                    }
-                }
+                String[] header = lines[i].split(":", 2);               
 
                 if ((allReqHeaders || allResHeaders) && header.length > 1) {
                     this.json.put(header[0].trim(), header[1].trim());

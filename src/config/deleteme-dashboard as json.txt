@@ -1,0 +1,118 @@
+{
+   "widgets": [
+      {
+         "type": "metric",
+         "x": 0,
+         "y": 0,
+         "width": 12,
+         "height": 12,
+         "properties": {
+            "metrics": [
+               [
+                  "jmeter",
+                  "AllResponseTime_ms"
+               ]
+            ],
+            "period": 3600,
+            "stat": "Average",
+            "region": "us-east-1",
+            "title": "Avg Response (ms/last hour)"
+         }
+      },
+      {
+         "type": "metric",
+         "x": 16,
+         "y": 0,
+         "width": 12,
+         "height": 12,
+         "properties": {
+            "metrics": [
+               [
+                  "jmeter",
+                  "AllConnectTime_ms"
+               ]
+            ],
+            "period": 3600,
+            "stat": "Average",
+            "region": "us-east-1",
+            "title": "Avg Connection (ms/last hour)"
+         }
+      },
+      {
+         "type": "metric",
+         "x": 32,
+         "y": 0,
+         "width": 12,
+         "height": 12,
+         "properties": {
+            "metrics": [
+               [
+                  "jmeter",
+                  "AllLatency_ms"
+               ]
+            ],
+            "period": 3600,
+            "stat": "Average",
+            "region": "us-east-1",
+            "title": "Avg Latency (ms/last hour)"
+         }
+      },
+      {
+         "type": "metric",
+         "x": 0,
+         "y": 16,
+         "width": 12,
+         "height": 12,
+         "properties": {
+            "metrics": [
+               [
+                  "jmeter",
+                  "AllHTTP_20X"
+               ]
+            ],
+            "period": 3600,
+            "stat": "Count",
+            "region": "us-east-1",
+            "title": "Successes - 20X (last hour)"
+         }
+      },
+      {
+         "type": "metric",
+         "x": 16,
+         "y": 16,
+         "width": 12,
+         "height": 12,
+         "properties": {
+            "metrics": [
+               [
+                  "jmeter",
+                  "AllHTTP_40X"
+               ]
+            ],
+            "period": 3600,
+            "stat": "Count",
+            "region": "us-east-1",
+            "title": "Client Errors - 40X (last hour)"
+         }
+      },
+            {
+         "type": "metric",
+         "x": 32,
+         "y": 16,
+         "width": 12,
+         "height": 12,
+         "properties": {
+            "metrics": [
+               [
+                  "jmeter",
+                  "AllHTTP_50X"
+               ]
+            ],
+            "period": 3600,
+            "stat": "Count",
+            "region": "us-east-1",
+            "title": "Server Errors - 50X (last hour)"
+         }
+      }
+   ]
+}

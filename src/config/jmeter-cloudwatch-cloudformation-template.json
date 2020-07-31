@@ -1,0 +1,163 @@
+{
+	"AWSTemplateFormatVersion": "2010-09-09",
+	"Description": "AWS CloudFormation Template for JMeter log group and custom metrics",
+	"Parameters": {
+  		"MetricsNamespace" : {
+    		"Type" : "String",
+    		"Default" : "jmeter",
+    		"Description" : "Name of the namespace for your CloudWatch metrics. Your metrics will be organized according to this namespace, for example: namespace/metric1, namespace/metric2, etc."
+  		}
+	},
+	"Mappings": {
+	},
+	"Resources": {
+	
+		"JMeterLogGroup": {
+            "Type": "AWS::Logs::LogGroup"
+        },		
+        "Requests":{
+            "Type": "AWS::Logs::MetricFilter",    
+            "Properties": {
+            "FilterPattern": "[]",
+            "LogGroupName": { "Ref" : "JMeterLogGroup" },
+            "MetricTransformations": [
+                        {
+                            "MetricValue": "1",
+                            "MetricNamespace": {"Ref":"MetricsNamespace"},
+                            "MetricName": "AllRequests"
+                        }
+                    ]
+            }
+        },
+        "HTTP200Responses":{
+            "Type": "AWS::Logs::MetricFilter",    
+            "Properties": {
+            "FilterPattern": "{($.ResponseCode = 20*) && ($.AssertionResults[0].failure IS FALSE)}",
+            "LogGroupName": { "Ref" : "JMeterLogGroup" },
+            "MetricTransformations": [
+                        {
+                            "MetricValue": "1",
+                            "MetricNamespace": {"Ref":"MetricsNamespace"},
+                            "MetricName": "AllHTTP_20X"
+                        }
+                    ]
+            }
+        },
+        "HTTP400Responses":{
+            "Type": "AWS::Logs::MetricFilter",    
+            "Properties": {
+            "FilterPattern": "{($.ResponseCode = 40*) && ($.AssertionResults[0].failure IS FALSE)}",
+            "LogGroupName": { "Ref" : "JMeterLogGroup" },
+            "MetricTransformations": [
+                        {
+                            "MetricValue": "1",
+                            "MetricNamespace": {"Ref":"MetricsNamespace"},
+                            "MetricName": "AllHTTP_40X"
+                        }
+                    ]
+            }
+        },
+        "HTTP500Responses":{
+            "Type": "AWS::Logs::MetricFilter",    
+            "Properties": {
+            "FilterPattern": "{($.ResponseCode = 50*) && ($.AssertionResults[0].failure IS FALSE)}",
+            "LogGroupName": { "Ref" : "JMeterLogGroup" },
+            "MetricTransformations": [
+                        {
+                            "MetricValue": "1",
+                            "MetricNamespace": {"Ref":"MetricsNamespace"},
+                            "MetricName": "AllHTTP_50X"
+                        }
+                    ]
+            }
+        },
+        "ResponseTimeMs":{
+            "Type": "AWS::Logs::MetricFilter",    
+            "Properties": {
+            "FilterPattern": "{ $.ResponseTime = * }",
+            "LogGroupName": { "Ref" : "JMeterLogGroup" },
+            "MetricTransformations": [
+                        {
+                            "MetricValue": "$.ResponseTime",
+                            "MetricNamespace": {"Ref":"MetricsNamespace"},
+                            "MetricName": "AllResponseTime_ms"
+                        }
+                    ]
+            }
+        },
+        "ConnectTimeMs":{
+            "Type": "AWS::Logs::MetricFilter",    
+            "Properties": {
+            "FilterPattern": "{ $.ConnectTime = * }",
+            "LogGroupName": { "Ref" : "JMeterLogGroup" },
+            "MetricTransformations": [
+                        {
+                            "MetricValue": "$.ConnectTime",
+                            "MetricNamespace": {"Ref":"MetricsNamespace"},
+                            "MetricName": "AllConnectTime_ms"
+                        }
+                    ]
+            }
+        },
+        "LatencyMs":{
+            "Type": "AWS::Logs::MetricFilter",    
+            "Properties": {
+            "FilterPattern": "{ $.Latency = * }",
+            "LogGroupName": { "Ref" : "JMeterLogGroup" },
+            "MetricTransformations": [
+                        {
+                            "MetricValue": "$.Latency",
+                            "MetricNamespace": {"Ref":"MetricsNamespace"},
+                            "MetricName": "AllLatency_ms"
+                        }
+                    ]
+            }
+        },
+        "SentBytes":{
+            "Type": "AWS::Logs::MetricFilter",    
+            "Properties": {
+            "FilterPattern": "{ $.SentBytes = *  }",
+            "LogGroupName": { "Ref" : "JMeterLogGroup" },
+            "MetricTransformations": [
+                        {
+                            "MetricValue": "$.SentBytes",
+                            "MetricNamespace": {"Ref":"MetricsNamespace"},
+                            "MetricName": "AllSentBytes"
+                        }
+                    ]
+            }
+        },
+        "ReceivedBytes":{
+            "Type": "AWS::Logs::MetricFilter",    
+            "Properties": {
+            "FilterPattern": "{ $.ReceivedBytes = *  }",
+            "LogGroupName": { "Ref" : "JMeterLogGroup" },
+            "MetricTransformations": [
+                        {
+                            "MetricValue": "$.ReceivedBytes",
+                            "MetricNamespace": {"Ref":"MetricsNamespace"},
+                            "MetricName": "AllReceivedBytes"
+                        }
+                    ]
+            }			
+        },
+        
+        "DashboardSideBySide": {
+            "Type": "AWS::CloudWatch::Dashboard",
+            "Properties": {
+                "DashboardName": "JMeter_Performance_Test_Dashboard",
+                "DashboardBody": "{ \"widgets\": [{\"type\": \"metric\",\"x\": 0,\"y\": 0,\"width\": 6,\"height\": 6,\"properties\": {   \"metrics\": [  [  \"jmeter\",  \"AllResponseTime_ms\"  ]   ],   \"period\": 300,   \"stat\": \"Average\",   \"region\": \"us-east-1\",   \"title\": \"Avg Response Time\"}},{\"type\": \"metric\",\"x\": 7,\"y\": 0,\"width\": 6,\"height\": 6,\"properties\": {   \"metrics\": [  [  \"jmeter\",  \"AllConnectTime_ms\"  ]   ],   \"period\": 300,   \"stat\": \"Average\",   \"region\": \"us-east-1\",   \"title\": \"Avg Connection Time\"}},{\"type\": \"metric\",\"x\": 14,\"y\": 0,\"width\": 6,\"height\": 6,\"properties\": {   \"metrics\": [  [  \"jmeter\",  \"AllLatency_ms\"  ]   ],   \"period\": 300,   \"stat\": \"Average\",   \"region\": \"us-east-1\",   \"title\": \"Avg Latency\"}},{\"type\": \"metric\",\"x\": 0,\"y\": 8,\"width\": 6,\"height\": 6,\"properties\": {   \"metrics\": [  [  \"jmeter\",  \"AllHTTP_20X\"  ]   ],   \"period\": 300,   \"stat\": \"SampleCount\",   \"region\": \"us-east-1\",   \"title\": \"Successes - 20X \"}},{\"type\": \"metric\",\"x\": 7,\"y\": 8,\"width\": 6,\"height\": 6,\"properties\": {   \"metrics\": [  [  \"jmeter\",  \"AllHTTP_40X\"  ]   ],   \"period\": 300,   \"stat\": \"SampleCount\",   \"region\": \"us-east-1\",   \"title\": \"Client Errors - 40X \"}},   {\"type\": \"metric\",\"x\": 14,\"y\": 8,\"width\": 6,\"height\": 6,\"properties\": {   \"metrics\": [  [  \"jmeter\",  \"AllHTTP_50X\"  ]   ],   \"period\": 300,   \"stat\": \"SampleCount\",   \"region\": \"us-east-1\",   \"title\": \"Server Errors - 50X \"}} ]}"
+            }
+        }
+    
+        
+	},
+	"Outputs": {
+		"CloudWatchLogGroupName": {
+			"Description": "The name of the CloudWatch log group",
+			"Value": {
+				"Ref": "JMeterLogGroup"
+			}
+		}
+	}
+}
